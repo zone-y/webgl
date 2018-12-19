@@ -1,8 +1,8 @@
 class shader {
     static v_shader: string = `
-    attribute vec4 a_Position;\n
+    uniform vec4 u_Position;\n
     void main(){\n
-        gl_Position = a_Position;\n
+        gl_Position = u_Position;\n
         gl_PointSize = 10.0;\n
     }
     `;
