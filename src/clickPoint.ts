@@ -38,6 +38,6 @@ class clickPoint {
             gl.uniform4f(this._positonAdr, p.x, p.y, .0, 1.0);
             gl.uniform4f(this._colorAdr, p.x, p.y, p.x / p.y, 1.0);
             gl.drawArrays(gl.POINTS, 0, 1);
-        })
+        });
     }
 }

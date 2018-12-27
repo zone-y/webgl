@@ -27,7 +27,7 @@ class triangle {
         }
         gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.POINTS, 0, n);
+        gl.drawArrays(gl.TRIANGLES, 0, n);
     }
     initBuffer(gl) {
         let vertex = gl.createBuffer();
