@@ -31,7 +31,7 @@ class triangle {
         }
         gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, n);
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
     }
 
     initBuffer(gl: WebGLRenderingContext): number {
@@ -41,11 +41,11 @@ class triangle {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex);
         let points = new Float32Array([
-            -.5, .0, .5, .0, .0, .5
+            -.0, .0, .5, .0, .0, .5, .5, .5
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
         gl.vertexAttribPointer(this._positonAdr, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this._positonAdr);
-        return 3;
+        return 4;
     }
 }
