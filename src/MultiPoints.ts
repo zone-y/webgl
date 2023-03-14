@@ -113,7 +113,7 @@ export class MultiPoint2 {
         const verts = new Float32Array(
             [-.5, -.5, .5, -.5, .5, .5, -.5, .5]
         );
-        const n = 3;
+        const n = 4;
         const gl = this._gl;
         const buffer = gl.createBuffer();
         if (!buffer) {
