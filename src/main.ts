@@ -1,3 +1,4 @@
+import { MultiPoint1, MultiPoint2 } from "./MultiPoints.js";
 import { Point } from "./OnePoint.js";
 import { triangle } from "./triangle.js";
 
@@ -7,8 +8,8 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new Point(gl, cvs);
-        obj.draw();
+        let obj = new MultiPoint2(gl, cvs);
+        // obj.draw();
     }
 }
 
