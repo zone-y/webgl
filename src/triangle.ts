@@ -20,7 +20,7 @@ void main(){
 `;
 const FSIZE = Float32Array.BYTES_PER_ELEMENT;
 const move: {x: number, y: number} = {x: .0, y: .0};
-class triangle {
+export class triangle {
 
     private _gl: WebGLRenderingContext;
     private _positonAdr: number;

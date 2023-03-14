@@ -1,10 +1,11 @@
+import { Point } from "./OnePoint.js";
 class Main {
     run() {
         console.log("Hi webgl");
         let cvs = document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new triangle();
-        obj.init(gl, cvs);
+        let obj = new Point(gl, cvs);
+        obj.draw();
     }
 }
 let app = new Main();

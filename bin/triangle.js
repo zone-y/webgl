@@ -1,25 +1,25 @@
 const vs = `
 attribute vec4 a_Position;
-attribute vec4 a_Color;
 uniform mat4 u_Trans;
-varying vec4 v_Color;
+attribute vec4 a_Color;
+varying vec4 v_Pos;
 void main(){
     
     gl_Position = u_Trans * a_Position;
     
-    v_Color = a_Color;
+    v_Pos = a_Position;
 }
 `;
 const fs = `
 precision mediump float;
-varying vec4 v_Color;
+varying vec4 v_Pos;
 void main(){
-    gl_FragColor = v_Color;
+    gl_FragColor = v_Pos;
 }
 `;
 const FSIZE = Float32Array.BYTES_PER_ELEMENT;
 const move = { x: .0, y: .0 };
-class triangle {
+export class triangle {
     init(gl, canvas) {
         if (!cuon.initShaders(gl, vs, fs)) {
             console.warn("gl程序初始化失败");
@@ -66,9 +66,9 @@ class triangle {
             move.x += offsetX, move.y += offsetY, .0, 1.,
         ]);
         gl.uniformMatrix4fv(this._transAdr, false, matrix);
-        gl.clearColor(.0, .0, .0, 1.0);
+        gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, n);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
     }
     initBuffer(gl) {
         let vertex = gl.createBuffer();
@@ -79,7 +79,7 @@ class triangle {
         let points = new Float32Array([
             0., 0., 1., .0, .0,
             .5, .0, .0, 1., .0,
-            .0, .5, .0, .0, 1.
+            .0, .5, .0, .0, 1.,
             // .5, .5, .3, .4, .5
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
