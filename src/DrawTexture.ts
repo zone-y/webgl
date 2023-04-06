@@ -12,9 +12,10 @@ const vs = `
 const fs = `
     precision mediump float;
     uniform sampler2D u_Sampler;
+    uniform sampler2D u_Sampler2;
     varying vec2 v_TexCoord;
     void main() {
-        gl_FragColor = texture2D(u_Sampler, v_TexCoord);
+        gl_FragColor = texture2D(u_Sampler, v_TexCoord) * texture2D(u_Sampler2, v_TexCoord);
     }
 `;
 
@@ -23,6 +24,7 @@ export class Textures {
     private _gl: WebGLRenderingContext;
     private _aPosition: number;
     private _aTexCoord: number;
+    private _loadCnt = 2;
 
     constructor(gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
         if (!cuon.initShaders(gl, vs, fs)) {
@@ -36,37 +38,54 @@ export class Textures {
             console.error('buffer初始化失败');
             return;
         }
-        // this.draw();
-        this.loadImage();
+        gl.clearColor(.8, .7, .2, .8);
+        const urls = ['./assets/sky.jpg', './assets/circle.gif'];
+        const samplers = ['u_Sampler', 'u_Sampler2'];
+        urls.forEach((u, i) => {
+            this.loadImage(u, samplers[i]);
+        })
     }
 
-    private loadImage() {
+    private loadImage(src: string, sampler: string) {
         const img = new Image();
         img.onload = () => {
-            this.initTexture(img);
-            this.draw();
+            this._loadCnt--;
+            this.initTexture(img, sampler);
+            if (this._loadCnt <= 0) {
+                this.draw();
+            }
         }
-        img.src = './cocos.png';
+        img.src = src;
     }
 
     private draw() {
         const gl = this._gl;
-        gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     }
 
-    private initTexture(img: HTMLImageElement) {
+    private initTexture(img: HTMLImageElement, samplerVar: string) {
         const gl = this._gl;
-        const samper = gl.getUniformLocation(cuon.program, 'u_Sampler');
+        const samper = gl.getUniformLocation(cuon.program, samplerVar);
         if (samper) {
             const texture = gl.createTexture();
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-            gl.activeTexture(gl.TEXTURE0);
+            if (samplerVar == 'u_Sampler') {
+                gl.activeTexture(gl.TEXTURE0);
+            } else {
+                gl.activeTexture(gl.TEXTURE1);
+            }
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-            gl.uniform1i(samper, 0);
+            if (samplerVar == 'u_Sampler') {
+                gl.uniform1i(samper, 0);
+            } else {
+                gl.uniform1i(samper, 1);
+            }
+            
         }
     }
 
@@ -79,10 +98,10 @@ export class Textures {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         const vertices = new Float32Array([
-            .0, .0, .0, .0,
-            .5, .0, 1., .0,
-            .5, .5, 1., 1.,
-            .0, .5, .0, 1.
+            .0, .0,    0.0, 0.0,
+            .0, 1.,    0.0, 1.0,
+            1., 1.,    1.0, 1.0,
+            1., .0,    1.0, 0.0
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
