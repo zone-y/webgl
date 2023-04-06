@@ -29,18 +29,17 @@ export class Textures {
             return;
         }
         this._gl = gl;
+        this._aPos = gl.getAttribLocation(cuon.program, 'a_Position');
+        this._aColor = gl.getAttribLocation(cuon.program, 'a_Color');
         if (this.initBuffer() < 0) {
             console.error('buffer初始化失败');
             return;
         }
-        this._aPos = gl.getAttribLocation(cuon.program, 'a_Position');
-        this._aColor = gl.getAttribLocation(cuon.program, 'a_Color');
         this.draw();
     }
 
     private draw() {
         const gl = this._gl;
-        // gl.attr
         gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
