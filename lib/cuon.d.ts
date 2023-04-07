@@ -11,6 +11,8 @@ declare module cuon {
     }
     export class Matrix4 {
         constructor(opt_src?: Matrix4);
+        elements: Float32Array;
+        setLookAt(eX: number, eY: number, eZ: number, aX: number, aY: number, aZ: number, uX: number, uY: number, uZ: number): Matrix4;
         setIdentity(): Matrix4;
         set(src: Matrix4): Matrix4;
         concat(other: Matrix4): Matrix4;
