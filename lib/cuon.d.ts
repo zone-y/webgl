@@ -12,6 +12,15 @@ declare module cuon {
     export class Matrix4 {
         constructor(opt_src?: Matrix4);
         elements: Float32Array;
+        setOrtho(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4;
+        /**
+         * 设置透视投影矩阵
+         * @param fovy 上下方向可视角度
+         * @param aspect 近裁剪面宽高比
+         * @param near 近裁剪面位置
+         * @param far 远裁剪面位置
+         */
+        setPerspective(fovy: number, aspect: number, near: number, far: number): Matrix4;
         setLookAt(eX: number, eY: number, eZ: number, aX: number, aY: number, aZ: number, uX: number, uY: number, uZ: number): Matrix4;
         setIdentity(): Matrix4;
         set(src: Matrix4): Matrix4;
