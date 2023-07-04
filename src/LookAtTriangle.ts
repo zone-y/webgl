@@ -44,12 +44,13 @@ export class LookAtTriangle {
         matView.setLookAt(0, 0, 5, 0, 0, -100, 0, 1, 0);
         const uMatP = gl.getUniformLocation(cuon.program, 'u_ViewMat');
         gl.uniformMatrix4fv(uMatP, false, matView.elements);
+        gl.enable(gl.DEPTH_TEST);
         this.draw();
     }
     private draw() {
         const gl = this._gl;
         gl.clearColor(.0, .0, .0, 1.);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 9);
     }
     private initBuffer(gl: WebGLRenderingContext) {
@@ -59,6 +60,11 @@ export class LookAtTriangle {
             return -1;
         }
         const verteices = new Float32Array([
+
+            0.75, 1.0, 0.0,   0.4, 0.4, 1.0,
+            0.25,-1.0, 0.0,   0.4, 0.4, 1.0,
+            1.25,-1.0, 0.0,   1.0, 0.4, 0.4,
+
             0.75, 1.0, -4.0,   0.4, 1.0, 0.4,
             0.25,-1.0, -4.0,   0.4, 1.0, 0.4,
             1.25,-1.0, -4.0,   1.0, 0.4, 0.4,
@@ -67,9 +73,7 @@ export class LookAtTriangle {
             0.25,-1.0, -2.0,   1.0, 1.0, 0.4,
             1.25,-1.0, -2.0,   1.0, 1.0, 0.4,
 
-            0.75, 1.0, 0.0,   0.4, 0.4, 1.0,
-            0.25,-1.0, 0.0,   0.4, 0.4, 1.0,
-            1.25,-1.0, 0.0,   1.0, 0.4, 0.4
+            
         ]);
         gl.bindBuffer(gl.ARRAY_BUFFER, buf);
         gl.bufferData(gl.ARRAY_BUFFER, verteices, gl.STATIC_DRAW);
