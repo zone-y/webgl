@@ -4,7 +4,9 @@ declare module cuon {
     export var getProgram: (gl: any)=>WebGLProgram;
     export var program: WebGLProgram;
     export class Vector3 {
-
+        constructor(opt_src?: number[]);
+        elements: Float32Array;
+        normalize(): Vector3;
     }
     export class Vector4 {
 
