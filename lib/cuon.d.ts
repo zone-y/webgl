@@ -26,12 +26,15 @@ declare module cuon {
         setPerspective(fovy: number, aspect: number, near: number, far: number): Matrix4;
         setLookAt(eX: number, eY: number, eZ: number, aX: number, aY: number, aZ: number, uX: number, uY: number, uZ: number): Matrix4;
         setIdentity(): Matrix4;
+        setTranslate(x: number, y: number, z: number): Matrix4;
+        setScale(x: number, y: number, z: number): Matrix4;
         set(src: Matrix4): Matrix4;
         concat(other: Matrix4): Matrix4;
         multiply(other: Matrix4): Matrix4;
         multiplyVector3(pos: Vector3): Vector3;
         multiplyVector4(pos: Vector4): Vector4;
         transpose(): Matrix4;
+        rotate(angle: number, x: number, y: number, z: number): Matrix4;
         setInverseOf(other: Matrix4): Matrix4;
         invert(): Matrix4;
     }

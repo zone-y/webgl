@@ -1,8 +1,10 @@
 import { loadFile, shaders } from "./Loader.js";
 
-const dir = 'LightedCube';
-const files = ['lc.vert', 'lc.frag'];
-export class LightedCube {
+// 点光源光照效果
+const dir = 'PointLightCube';
+const files = ['plc.vert', 'plc.frag'];
+const step = 0.4;
+export class PointLightCube {
     private _gl: WebGLRenderingContext;
 
     constructor(gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
@@ -14,7 +16,8 @@ export class LightedCube {
         Promise.all(tasks)
         .then(() => {
             this.init();
-            this.draw();
+            // this.draw();
+            this.update();
         })
         .catch(e => {
             console.error(e);
@@ -27,15 +30,39 @@ export class LightedCube {
             return;
         }
         const gl = this._gl;
+        const model = new cuon.Matrix4();
+        // 按照模型矩阵的算式顺序，决定每种变换函数调用顺序
+        model.setScale(3, 3, 3).rotate(this._angle, 0, 1, 0);
+        // mvp.multiply(model);
+        
+
+        const normal = new cuon.Matrix4();
+        normal.setInverseOf(model);
+        normal.transpose();
+        const u_Normal = gl.getUniformLocation(cuon.program, 'u_NormalMat');
+        gl.uniformMatrix4fv(u_Normal, false, normal.elements);
+        gl.uniformMatrix4fv(gl.getUniformLocation(cuon.program, 'u_ModelMat'), false, model.elements);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.drawElements(gl.TRIANGLES, this._vertNums, gl.UNSIGNED_BYTE, 0);
+    }
+    private _angle = 0;
+    private update() {
+        requestAnimationFrame(() => {
+            this.update();
+        });
+        if (this._angle + step > 360) {
+            this._angle = this._angle + step - 360;
+        } else {
+            this._angle += step;
+        }
+        this.draw();
     }
 
     private _inited: boolean;
     private init() {
         const gl = this._gl;
-        if (!cuon.initShaders(gl, shaders['lc.vert'], shaders['lc.frag'])) {
+        if (!cuon.initShaders(gl, shaders['plc.vert'], shaders['plc.frag'])) {
             return;
         }
         if (this.initVertBuffers() < 0) {
@@ -48,20 +75,8 @@ export class LightedCube {
         const mvp = new cuon.Matrix4();
         // 模型视图投影矩阵，按照三种矩阵的算式顺序，决定三种函数的调用顺序
         // <投影矩阵> x <视图矩阵> x <模型矩阵>
-        mvp.setPerspective(30, 1, 1, 100).lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
-        
-        const model = new cuon.Matrix4();
-        // 按照模型矩阵的算式顺序，决定每种变换函数调用顺序
-        // 先旋转，再平移，算式为 <平移矩阵> x <旋转矩阵>
-        model.setTranslate(0, 0.8, 0).rotate(90, 0, 1, 0);
-        mvp.multiply(model);
+        mvp.setPerspective(30, 1, 1, 100).lookAt(9, 9, 21, 0, 0, 0, 0, 1, 0);
         gl.uniformMatrix4fv(u_Mat, false, mvp.elements);
-
-        const normal = new cuon.Matrix4();
-        normal.setInverseOf(model);
-        normal.transpose();
-        const u_Normal = gl.getUniformLocation(cuon.program, 'u_NormalMat');
-        gl.uniformMatrix4fv(u_Normal, false, normal.elements);
 
         const u_AColor = gl.getUniformLocation(cuon.program, 'u_AmbientLight');
         gl.uniform3f(u_AColor, 0.2, 0.2, 0.2);
@@ -69,9 +84,9 @@ export class LightedCube {
         const u_LColor = gl.getUniformLocation(cuon.program, 'u_LightColor');
         gl.uniform3f(u_LColor, 1.0, 1.0, 1.0); // 白光
 
-        const u_LDirect = gl.getUniformLocation(cuon.program, 'u_LightDirect');
-        const v3 = new cuon.Vector3([0.5, 3.0, 4.0]);
-        gl.uniform3fv(u_LDirect, v3.normalize().elements); // 归一化的入射光方向
+        const u_LPosition = gl.getUniformLocation(cuon.program, 'u_LightPosition');
+        const v3 = new cuon.Vector3([2.3, 4.0, 3.5]);
+        gl.uniform3fv(u_LPosition, v3.elements);
         gl.enable(gl.DEPTH_TEST);
         this._inited = true;
     }

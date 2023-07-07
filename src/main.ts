@@ -4,6 +4,7 @@ import { LightedCube } from "./LightedCube.js";
 import { LookAtTriangle } from "./LookAtTriangle.js";
 import { MultiPoint1, MultiPoint2 } from "./MultiPoints.js";
 import { Point } from "./OnePoint.js";
+import { PointLightCube } from "./PointLightCube.js";
 import { triangle } from "./triangle.js";
 
 class Main {
@@ -12,7 +13,7 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new LightedCube(gl, cvs);
+        let obj = new PointLightCube(gl, cvs);
         // obj.draw();
     }
 }
