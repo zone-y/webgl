@@ -13,7 +13,7 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new PointLightCube(gl, cvs);
+        let obj = new Textures(gl, cvs);
         // obj.draw();
     }
 }

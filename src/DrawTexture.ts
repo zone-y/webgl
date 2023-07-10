@@ -1,11 +1,14 @@
+import { tick } from "./Loader.js";
+
 const vs = `
     attribute vec4 a_Position;
     attribute vec2 a_TexCoord;
+    uniform vec2 u_Trans;
     varying vec2 v_TexCoord;
 
     void main() {
         gl_Position = a_Position;
-        v_TexCoord = a_TexCoord;
+        v_TexCoord = a_TexCoord + u_Trans;
     }
 `;
 
@@ -15,7 +18,7 @@ const fs = `
     uniform sampler2D u_Sampler2;
     varying vec2 v_TexCoord;
     void main() {
-        gl_FragColor = texture2D(u_Sampler, v_TexCoord) * texture2D(u_Sampler2, v_TexCoord);
+        gl_FragColor = texture2D(u_Sampler, v_TexCoord) * 2.0;
     }
 `;
 
@@ -52,15 +55,35 @@ export class Textures {
             this._loadCnt--;
             this.initTexture(img, sampler);
             if (this._loadCnt <= 0) {
+                tick(this.update.bind(this));
                 this.draw();
             }
         }
         img.src = src;
     }
 
+    private _elapse: number;
+    private _transArr = [0.5, 0, 0.5, 0.5, 0, 0.5, 0, 0];
+    private _index: number = 0;
+    private update(dlt: number) {
+        if (this._elapse === undefined) {
+            this._elapse = dlt;
+        } else if (this._elapse >= 1000) {
+            this._elapse -= 1000;
+            this.draw();
+            this._index += 2;
+            if (this._index >= this._transArr.length) {
+                this._index = 0;
+            }
+        } else {
+            this._elapse += dlt;
+        }
+    }
+
     private draw() {
         const gl = this._gl;
         gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     }
 
@@ -98,10 +121,10 @@ export class Textures {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         const vertices = new Float32Array([
-            .0, .0,    0.0, 0.0,
-            .0, 1.,    0.0, 1.0,
-            1., 1.,    1.0, 1.0,
-            1., .0,    1.0, 0.0
+            0.0, 0.0,    0.0, 0.0,
+            0.0, 0.5,    0.0, 0.5,
+            0.5, 0.5,    0.5, 0.5,
+            0.5, 0.0,    0.5, 0.0
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         const stride = 4 * Float32Array.BYTES_PER_ELEMENT;

@@ -14,3 +14,13 @@ export function loadFile(file: string, dir: string): Promise<string> {
         xhr.send();
     })
 }
+let time: number = 0;
+export function tick(update: (dlt: number) => void) {
+    if (time) {
+        update && update(Date.now() - time)
+    }
+    time = Date.now();
+    requestAnimationFrame(() => {
+        tick(update);
+    })
+}
