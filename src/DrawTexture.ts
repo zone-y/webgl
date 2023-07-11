@@ -1,52 +1,44 @@
-import { tick } from "./Loader.js";
+import { loadFile, shaders, tick } from "./Loader.js";
 
-const vs = `
-    attribute vec4 a_Position;
-    attribute vec2 a_TexCoord;
-    uniform vec2 u_Trans;
-    varying vec2 v_TexCoord;
-
-    void main() {
-        gl_Position = a_Position;
-        v_TexCoord = a_TexCoord + u_Trans;
-    }
-`;
-
-const fs = `
-    precision mediump float;
-    uniform sampler2D u_Sampler;
-    uniform sampler2D u_Sampler2;
-    varying vec2 v_TexCoord;
-    void main() {
-        gl_FragColor = texture2D(u_Sampler, v_TexCoord) * 2.0;
-    }
-`;
+const dir = 'DrawTexture';
+const files = ['dt.vert', 'dt.frag'];
 
 export class Textures {
 
     private _gl: WebGLRenderingContext;
-    private _aPosition: number;
-    private _aTexCoord: number;
-    private _loadCnt = 2;
+    private _loadCnt = 1;
 
     constructor(gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
-        if (!cuon.initShaders(gl, vs, fs)) {
+        const tasks = [];
+        files.forEach(f => {
+            tasks.push(loadFile(f, dir));
+        });
+        Promise.all(tasks)
+        .then(() => {
+            this.init();
+            const urls = ['./assets/cocos.png'];
+            const samplers = ['u_Sampler'];
+            urls.forEach((u, i) => {
+                this.loadImage(u, samplers[i]);
+            })
+        })
+        .catch(e => {
+            console.error(e);
+        })
+        this._gl = gl;
+    }
+
+    private init() {
+        const gl = this._gl;
+        if (!cuon.initShaders(gl, shaders['dt.vert'], shaders['dt.frag'])) {
             console.error('shader初始化失败');
             return;
         }
-        this._gl = gl;
-        this._aPosition = gl.getAttribLocation(cuon.program, 'a_Position');
-        this._aTexCoord = gl.getAttribLocation(cuon.program, 'a_TexCoord');
         if (this.initBuffer() < 0) {
-            console.error('buffer初始化失败');
+            console.error(' buffer 初始化失败');
             return;
         }
-        gl.clearColor(.8, .7, .2, .8);
-        const urls = ['./assets/sky.jpg', './assets/circle.gif'];
-        const samplers = ['u_Sampler', 'u_Sampler2'];
-        urls.forEach((u, i) => {
-            this.loadImage(u, samplers[i]);
-        })
+        gl.enable(gl.DEPTH_TEST);
     }
 
     private loadImage(src: string, sampler: string) {
@@ -55,7 +47,7 @@ export class Textures {
             this._loadCnt--;
             this.initTexture(img, sampler);
             if (this._loadCnt <= 0) {
-                tick(this.update.bind(this));
+                // tick(this.update.bind(this));
                 this.draw();
             }
         }
@@ -63,7 +55,7 @@ export class Textures {
     }
 
     private _elapse: number;
-    private _transArr = [0.5, 0, 0.5, 0.5, 0, 0.5, 0, 0];
+    private _transArr = [0.0, 0, 0.5, 0.5, 0, 0.5, 0, 0];
     private _index: number = 0;
     private update(dlt: number) {
         if (this._elapse === undefined) {
@@ -82,7 +74,8 @@ export class Textures {
 
     private draw() {
         const gl = this._gl;
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(.8, .7, .2, .8);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     }
@@ -100,9 +93,9 @@ export class Textures {
             }
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
             if (samplerVar == 'u_Sampler') {
                 gl.uniform1i(samper, 0);
             } else {
@@ -122,17 +115,20 @@ export class Textures {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         const vertices = new Float32Array([
             0.0, 0.0,    0.0, 0.0,
-            0.0, 0.5,    0.0, 0.5,
-            0.5, 0.5,    0.5, 0.5,
-            0.5, 0.0,    0.5, 0.0
+            0.0, 0.7,    0.0, 1.0,
+            0.5, 0.7,    1.0, 1.0,
+            0.5, 0.0,    1.0, 0.0
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
-        gl.vertexAttribPointer(this._aPosition, 2, gl.FLOAT, false, stride, 0);
-        gl.enableVertexAttribArray(this._aPosition);
 
-        gl.vertexAttribPointer(this._aTexCoord, 2, gl.FLOAT, false, stride, 2 * Float32Array.BYTES_PER_ELEMENT);
-        gl.enableVertexAttribArray(this._aTexCoord);
+        const a_pos = gl.getAttribLocation(cuon.program, 'a_Position');
+        gl.vertexAttribPointer(a_pos, 2, gl.FLOAT, false, stride, 0);
+        gl.enableVertexAttribArray(a_pos);
+        
+        const a_texcoord = gl.getAttribLocation(cuon.program, 'a_TexCoord');
+        gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, stride, 2 * Float32Array.BYTES_PER_ELEMENT);
+        gl.enableVertexAttribArray(a_texcoord);
         return n;
     }
 }
