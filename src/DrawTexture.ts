@@ -115,9 +115,9 @@ export class Textures {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         const vertices = new Float32Array([
             0.0, 0.0,    0.0, 0.0,
-            0.0, 0.7,    0.0, 1.0,
-            0.5, 0.7,    1.0, 1.0,
-            0.5, 0.0,    1.0, 0.0
+            0.0, 0.5,    0.0, 1.0,
+            0.28, 0.5,    1.0, 1.0,
+            0.28, 0.0,    1.0, 0.0
         ]);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
