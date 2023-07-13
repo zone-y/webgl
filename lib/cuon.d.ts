@@ -6,6 +6,9 @@ declare module cuon {
     export class Vector3 {
         constructor(opt_src?: number[]);
         elements: Float32Array;
+        x: number;
+        y: number;
+        z: number;
         normalize(): Vector3;
     }
     export class Vector4 {

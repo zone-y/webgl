@@ -1,4 +1,4 @@
-import { Textures } from "./DrawTexture.js";
+import { DrawTextures } from "./DrawTexture.js";
 import { HelloCube } from "./HelloCube.js";
 import { LightedCube } from "./LightedCube.js";
 import { LookAtTriangle } from "./LookAtTriangle.js";
@@ -13,7 +13,7 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new Textures(gl, cvs);
+        let obj = new DrawTextures(gl, cvs);
         // obj.draw();
     }
 }
