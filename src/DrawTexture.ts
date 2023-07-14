@@ -5,11 +5,11 @@ const files = ['dt.vert', 'dt.frag'];
 /**canvas画布宽高比 */
 let CVS_ASPECT: number;
 
+let gl: WebGLRenderingContext;
+
 export class DrawTextures {
 
-    private _gl: WebGLRenderingContext;
-
-    constructor(gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
+    constructor(_gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
         CVS_ASPECT = cvs.width / cvs.height;
         const tasks = [];
         files.forEach(f => {
@@ -17,53 +17,83 @@ export class DrawTextures {
         });
         Promise.all(tasks)
         .then(() => {
-            if (!cuon.initShaders(gl, shaders['dt.vert'], shaders['dt.frag'])) {
-                console.error('shader初始化失败');
-                return;
-            }
-            // const itasks = [];
-            // const urls = ['./assets/cocos.png'];
-            // urls.forEach((u, i) => {
-            //     itasks.push(this.loadImage(u));
-            // });
-            // Promise.all(itasks)
-            // .then((imgs: HTMLImageElement[]) => {
-
-            // })
-            const img = new Image();
-            img.onload = () => {
-                this.addImage(img, 0);
-            }
-            img.src = "./assets/DrawTexture/forest.png";
+            this.init(gl);
+            tick(this.update.bind(this));
+            const itasks = [];
+            const urls = ['./assets/DrawTexture/forest.png', './assets/DrawTexture/alien.png'];
+            urls.forEach((u, i) => {
+                itasks.push(this.loadImage(u));
+            });
+            Promise.all(itasks)
+            .then((imgs: HTMLImageElement[]) => {
+                imgs.forEach(i => {
+                    if (i.src.match(/alien/)) {
+                        this.addImage(i, 0.4, 1);
+                    } else {
+                        this.addImage(i, 2.0, 0);
+                    }
+                })
+            })
         })
         .catch(e => {
             console.error(e);
         })
-        this._gl = gl;
+        gl = _gl;
     }
 
-    private addImage(img: HTMLImageElement, index: number) {
-        
-        const vertices = this.generateVertsCoord(img, 2.0, new cuon.Vector3([-1.0, -1.0, index * 0.1 - 0.99]), index);
+    private init(gl: WebGLRenderingContext) {
+        if (!cuon.initShaders(gl, shaders['dt.vert'], shaders['dt.frag'])) {
+            console.error('shader初始化失败');
+            return;
+        }
+        gl.enable(gl.DEPTH_TEST);
+        // if (this.initBuffer() < 0) {
+        //     return;
+        // }
+    }
+
+    private _vertices: number[] = [];
+
+    private addImage(img: HTMLImageElement, width: number, index: number) {
+        const vertices = this.generateVertsCoord(img, width, new cuon.Vector3([-1.0, -1.0, index * 0.1 - 0.99]), index);
         console.log('顶点数据：', vertices);
-        const gl = this._gl;
+        this.initBuffer(vertices);
+
+        const indices = new Uint8Array([
+            0, 1, 2, 0, 2, 3
+        ]);
+        const iBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        // this._vertices = this._vertices.concat(vertices);
+        // const bytes = new Float32Array(this._vertices);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
+        // gl.bufferData(gl.ARRAY_BUFFER, bytes.byteLength, gl.DYNAMIC_DRAW);
+        // gl.bufferSubData(gl.ARRAY_BUFFER, 0, bytes);
+
         // 向缓冲区写入顶点数据
+        this.initTexture(img, 0);
+        this.draw();
+    }
+    private _buffer: WebGLBuffer;
+    private initBuffer(a): number {
         const buffer = gl.createBuffer();
+        if (!buffer) {
+            console.error('buffer创建失败');
+            return -1;
+        }
+        this._buffer = buffer;
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(a), gl.STATIC_DRAW);
         this.setAttrib('a_Position', 3, 6, 0);
         this.setAttrib('a_TexCoord', 2, 6, 3);
-        this.setAttrib('a_Indexxx', 1, 6, 5);
-
-        this.initTexture(img, index);
-        gl.enable(gl.DEPTH_TEST);
-        this.draw();
+        this.setAttrib('a_Index', 1, 6, 5);
+        gl.clearColor(.8, .7, .2, .8);
+        return 0;
     }
 
     private setAttrib(name: string, size: number, stride: number, offset: number) {
         const FSIZE = Float32Array.BYTES_PER_ELEMENT;
-        const gl = this._gl;
         const attrib = gl.getAttribLocation(cuon.program, name);
         if (attrib < 0) {
             console.warn('attrib not found: ', name);
@@ -83,22 +113,12 @@ export class DrawTextures {
         const aspect = img.height / img.width;
         const height = width * aspect * CVS_ASPECT;
         const {x, y, z} = pos;
-        return [
+        return ([
             x, y, z, 0.0, 0.0, index,
             x + width, y, z, 1.0, 0.0, index,
             x + width, y + height, z, 1.0, 1.0, index,
             x, y + height, z, 0.0, 1.0, index
-        ];
-    }
-
-    private init() {
-        const gl = this._gl;
-        
-        if (this.initVerts() < 0) {
-            console.error(' buffer 初始化失败');
-            return;
-        }
-        gl.enable(gl.DEPTH_TEST);
+        ]);
     }
 
     private loadImage(src: string) {
@@ -115,30 +135,28 @@ export class DrawTextures {
     private _transArr = [0.0, 0, 0.5, 0.5, 0, 0.5, 0, 0];
     private _index: number = 0;
     private update(dlt: number) {
-        if (this._elapse === undefined) {
-            this._elapse = dlt;
-        } else if (this._elapse >= 1000) {
-            this._elapse -= 1000;
+        // if (this._elapse === undefined) {
+        //     this._elapse = dlt;
+        // } else if (this._elapse >= 1000) {
+        //     this._elapse -= 1000;
             this.draw();
-            this._index += 2;
-            if (this._index >= this._transArr.length) {
-                this._index = 0;
-            }
-        } else {
-            this._elapse += dlt;
-        }
+        //     this._index += 2;
+        //     if (this._index >= this._transArr.length) {
+        //         this._index = 0;
+        //     }
+        // } else {
+        //     this._elapse += dlt;
+        // }
     }
 
     private draw() {
-        const gl = this._gl;
-        gl.clearColor(.8, .7, .2, .8);
+        
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
-        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+        // gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
     }
 
     private initTexture(img: HTMLImageElement, index: number) {
-        const gl = this._gl;
         const sampler = 'u_Sampler' + index;
         const samper = gl.getUniformLocation(cuon.program, sampler);
         if (samper) {
@@ -153,32 +171,5 @@ export class DrawTextures {
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
             gl.uniform1i(samper, index);
         }
-    }
-
-    private initVerts(): number {
-        const n = 4, gl = this._gl;
-        const buffer = gl.createBuffer();
-        if (!buffer) {
-            console.error('buffer创建失败');
-            return -1;
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        const vertices = new Float32Array([
-            0.0, 0.0,    0.0, 0.0,
-            0.0, 0.5,    0.0, 1.0,
-            0.28, 0.5,    1.0, 1.0,
-            0.28, 0.0,    1.0, 0.0
-        ]);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
-
-        const a_pos = gl.getAttribLocation(cuon.program, 'a_Position');
-        gl.vertexAttribPointer(a_pos, 2, gl.FLOAT, false, stride, 0);
-        gl.enableVertexAttribArray(a_pos);
-        
-        const a_texcoord = gl.getAttribLocation(cuon.program, 'a_TexCoord');
-        gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, stride, 2 * Float32Array.BYTES_PER_ELEMENT);
-        gl.enableVertexAttribArray(a_texcoord);
-        return n;
     }
 }

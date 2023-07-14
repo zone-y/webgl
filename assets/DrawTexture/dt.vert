@@ -1,6 +1,6 @@
 attribute vec4 a_Position;
 attribute vec2 a_TexCoord;
-attribute float a_Indexxx;
+// attribute float a_Index;
 
 varying vec2 v_TexCoord;
 // varying float v_Index;
