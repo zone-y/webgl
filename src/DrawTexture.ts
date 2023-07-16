@@ -33,6 +33,7 @@ export class DrawTextures {
             const img = new Image();
             img.onload = () => {
                 this.addImage(img, 0);
+                this.draw();
             }
             img.src = "./assets/DrawTexture/forest.png";
         })
@@ -40,25 +41,41 @@ export class DrawTextures {
             console.error(e);
         })
         this._gl = gl;
+        document.onkeydown = (evt: KeyboardEvent) => {
+            switch(evt.code) {
+                case 'ArrowRight':
+                    console.log('向右');
+                    break;
+                case 'ArrowLeft':
+                    console.log('向左');
+                    break;
+            }
+        }
     }
 
     private addImage(img: HTMLImageElement, index: number) {
-        
         const vertices = this.generateVertsCoord(img, 2.0, new cuon.Vector3([-1.0, -1.0, index * 0.1 - 0.99]), index);
         console.log('顶点数据：', vertices);
         const gl = this._gl;
         // 向缓冲区写入顶点数据
+        this.setVerts(vertices);
+        this.initTexture(img, index);
+        gl.enable(gl.DEPTH_TEST);
+    }
+
+    private setVerts(vertices: Float32Array): number {
+        const gl = this._gl;
         const buffer = gl.createBuffer();
+        if (!buffer) {
+            console.error('buffer创建失败');
+            return -1;
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         this.setAttrib('a_Position', 3, 6, 0);
         this.setAttrib('a_TexCoord', 2, 6, 3);
         this.setAttrib('a_Indexxx', 1, 6, 5);
-
-        this.initTexture(img, index);
-        gl.enable(gl.DEPTH_TEST);
-        this.draw();
+        return 0;
     }
 
     private setAttrib(name: string, size: number, stride: number, offset: number) {
@@ -83,22 +100,12 @@ export class DrawTextures {
         const aspect = img.height / img.width;
         const height = width * aspect * CVS_ASPECT;
         const {x, y, z} = pos;
-        return [
-            x, y, z, 0.0, 0.0, index,
+        return new Float32Array([
+            x + 0.4, y, z, 0.0, 0.0, index,
             x + width, y, z, 1.0, 0.0, index,
             x + width, y + height, z, 1.0, 1.0, index,
             x, y + height, z, 0.0, 1.0, index
-        ];
-    }
-
-    private init() {
-        const gl = this._gl;
-        
-        if (this.initVerts() < 0) {
-            console.error(' buffer 初始化失败');
-            return;
-        }
-        gl.enable(gl.DEPTH_TEST);
+        ]);
     }
 
     private loadImage(src: string) {
@@ -133,7 +140,7 @@ export class DrawTextures {
         const gl = this._gl;
         gl.clearColor(.8, .7, .2, .8);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
+        // gl.uniform2f(gl.getUniformLocation(cuon.program, 'u_Trans'), this._transArr[this._index], this._transArr[this._index + 1]);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     }
 
@@ -153,32 +160,5 @@ export class DrawTextures {
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
             gl.uniform1i(samper, index);
         }
-    }
-
-    private initVerts(): number {
-        const n = 4, gl = this._gl;
-        const buffer = gl.createBuffer();
-        if (!buffer) {
-            console.error('buffer创建失败');
-            return -1;
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        const vertices = new Float32Array([
-            0.0, 0.0,    0.0, 0.0,
-            0.0, 0.5,    0.0, 1.0,
-            0.28, 0.5,    1.0, 1.0,
-            0.28, 0.0,    1.0, 0.0
-        ]);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
-
-        const a_pos = gl.getAttribLocation(cuon.program, 'a_Position');
-        gl.vertexAttribPointer(a_pos, 2, gl.FLOAT, false, stride, 0);
-        gl.enableVertexAttribArray(a_pos);
-        
-        const a_texcoord = gl.getAttribLocation(cuon.program, 'a_TexCoord');
-        gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, stride, 2 * Float32Array.BYTES_PER_ELEMENT);
-        gl.enableVertexAttribArray(a_texcoord);
-        return n;
     }
 }
