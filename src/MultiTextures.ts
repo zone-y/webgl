@@ -14,6 +14,8 @@ export class MultiTextures {
         canvas = _cvs;
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         const img = new _Image();
         img.src = './assets/DrawTexture/forest.png';
         img.x = - canvas.width / 2;
@@ -22,15 +24,23 @@ export class MultiTextures {
 
         const img2 = new _Image();
         img2.src = './assets/DrawTexture/alien.png';
-        img2.x = -80;
-        img2.y = -100;
+        img2.x = -60;
+        img2.y = -85;
         img2.index = 1;
         img2.scaleX = img2.scaleY = 0.5;
 
+        const img3 = new _Image();
+        img3.src = './assets/DrawTexture/cloud.png';
+        img3.x = -180;
+        img3.y = -20;
+        img3.index = 2;
+        img3.fs = 'cloud.frag';
+        // img3.opacity = 0.8;
         tick(() => {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             img.draw();
             img2.draw();
+            img3.draw();
         })
     }
 }
@@ -42,9 +52,15 @@ class _Image {
     private _sx: number;
     private _sy: number;
 
+    private _opacity: number;
+
+    public vs = 'mt.vert';
+    public fs = 'mt.frag';
+
     constructor() {
         this._sx = 1.0;
         this._sy = 1.0;
+        this._opacity = 1.0;
         this._img = new Image();
         this._img.onload = () => {
             this.onLoad();
@@ -77,6 +93,8 @@ class _Image {
     set src(v: string) {
         this._img.src = v;
     }
+
+    set opacity(v: number) { this._opacity = v }
 
     private _vertbuffer: WebGLBuffer;
     private _idxbuffer: WebGLBuffer;
@@ -145,18 +163,23 @@ class _Image {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._texture);
+
+        // gl.uniform1f(this._u_Opacity, this._opacity);
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
     }
 
+    private _u_Opacity: WebGLUniformLocation;
     private onLoad() {
         const tasks = [];
-        ['mt.vert', 'mt.frag'].forEach(f => {
+        const {vs, fs} = this;
+        [vs, fs].forEach(f => {
             tasks.push(loadFile(f, 'MultiTexture'));
         });
         Promise.all(tasks)
         .then(() => {
-            this._program = initProgram(shaders['mt.vert'], shaders['mt.frag']);
+            this._program = initProgram(shaders[vs], shaders[fs]);
             if (this._program) {
+                // this._u_Opacity = gl.getUniformLocation(this._program, 'u_Opacity');
                 this.initVertBuffers();
                 this.initTexture();
             }
