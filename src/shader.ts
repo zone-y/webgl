@@ -1,4 +1,4 @@
-class shader {
+export class shader {
     static v_shader: string = `
     uniform vec4 u_Position;\n
     void main(){\n
