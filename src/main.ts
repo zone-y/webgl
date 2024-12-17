@@ -7,7 +7,8 @@ import { MultiTextures } from "./MultiTextures.js";
 import { Point } from "./OnePoint.js";
 import { PointLightCube } from "./PointLightCube.js";
 import { triangle } from "./triangle.js";
-import { clickPoint } from "./clickPoint.js";
+import { ColorfulTriangle } from "./ColorfulTriangle.js";
+import { ClickPoint } from "./ClickPoints.js";
 
 class Main {
 
@@ -15,7 +16,7 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new clickPoint(gl, cvs);
+        let obj = new ClickPoint(gl, cvs);
         // obj.draw();
     }
 }

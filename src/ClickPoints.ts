@@ -1,49 +1,53 @@
-import { loadFile, shaders } from "./Loader.js";
+import { MyBase } from "./MyBase.js";
 
-export class clickPoint {
-    constructor(gl: WebGLRenderingContext, cvs?: HTMLCanvasElement){
+let gl: WebGLRenderingContext;
+let canvas: HTMLCanvasElement;
+
+export class ClickPoint extends MyBase{
+    protected onLoad(vs: string, fs: string): void {
+        if (cuon.initShaders(gl, vs, fs)) {
+            this._positonAdr = gl.getAttribLocation(cuon.getProgram(gl), "a_Position");
+            this._colorAdr = gl.getAttribLocation(cuon.getProgram(gl), "a_Color");
+            canvas.onclick = (e)=>{this.onClick(e);}
+            // this.initBuffer();
+            // gl.clear(gl.COLOR_BUFFER_BIT);
+            // gl.drawArrays(gl.POINTS, 0, this._points.length);
+        }
+    }
+    constructor(_gl: WebGLRenderingContext, cvs?: HTMLCanvasElement) {
+        super('cp.vert', 'cp.frag', 'ClickPoints');
         this._points = [];
         this._positonAdr = 0;
         this._colorAdr = 0;
+        gl = _gl, canvas = cvs;
         gl.clearColor(1.0, 1.0, .2, .7);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        const tasks: Promise<string>[] = [];
-        const vs = 'cp.vert';
-        const fs = 'cp.frag';
-        [vs, fs].forEach(f => {
-            tasks.push(loadFile(f, 'ClickPoints'));
-        })
-        Promise.all(tasks)
-        .then(([vs, fs]) => {
-            if (cuon.initShaders(gl, vs, fs)) {
-                this._positonAdr = gl.getAttribLocation(cuon.getProgram(gl), "a_Position");
-                this._colorAdr = gl.getUniformLocation(cuon.getProgram(gl), "u_FragColor");
-                this._gl = gl;
-                cvs.onclick = (e)=>{this.onClick(e);};
-            }
-        })
-        // if(cuon.initShaders(gl, shader.v_shader, shader.f_shader)){
-        //     this._positonAdr = gl.getUniformLocation(cuon.getProgram(gl), "u_Position");
-        // }
-        
     }
 
-    private initBuffer(gl: WebGLRenderingContext) {
+    private bufferData() {
         const buf = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buf);
         const points = [];
         this._points.forEach(p => {
-            points.push(p.x, p.y);
+            const r = Math.abs(p.x),
+                  g = Math.abs(p.y),
+                  b = (r + g) / 2;
+            points.push(p.x, p.y, r , g, b);
         })
         const vertices = new Float32Array(points);
+        const FSIZE = vertices.BYTES_PER_ELEMENT;
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(this._positonAdr, 2, gl.FLOAT, false, 0, 0);
+
+        gl.vertexAttribPointer(this._positonAdr, 2, gl.FLOAT, false, FSIZE * 5, 0);
         gl.enableVertexAttribArray(this._positonAdr);
+
+        gl.vertexAttribPointer(this._colorAdr, 3, gl.FLOAT, false, 5 * FSIZE, 2 * FSIZE);
+        gl.enableVertexAttribArray(this._colorAdr);
     }
 
-    private _gl: WebGLRenderingContext;
+    
     private _positonAdr: number;
-    private _colorAdr: WebGLUniformLocation;
+    private _colorAdr: number;
     private _points: Point[];
 
     onClick(e: MouseEvent): void {
@@ -69,13 +73,7 @@ export class clickPoint {
     }
 
     draw():void {
-        let gl = this._gl;
-        this.initBuffer(gl);
-        this._points.forEach(p=>{
-            // gl.vertexAttrib3f(this._positonAdr, p.x, p.y, .0);
-            // gl.uniform4f(this._positonAdr, p.x, p.y, .0, 1.0);
-            gl.uniform4f(this._colorAdr, p.x, p.y, p.x / p.y, 1.0);
-        });
+        this.bufferData();
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, this._points.length);
     }
