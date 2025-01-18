@@ -9,6 +9,7 @@ import { PointLightCube } from "./PointLightCube.js";
 import { triangle } from "./triangle.js";
 import { ColorfulTriangle } from "./ColorfulTriangle.js";
 import { ClickPoint } from "./ClickPoints.js";
+import { ProjCamera } from "./ProjCamera.js";
 
 class Main {
 
@@ -16,7 +17,7 @@ class Main {
         console.log("Hi webgl");
         let cvs = <HTMLCanvasElement>document.getElementById("view");
         let gl = cuon.getWebGLContext(cvs);
-        let obj = new ClickPoint(gl, cvs);
+        let obj = new ProjCamera(gl, cvs);
         // obj.draw();
     }
 }
