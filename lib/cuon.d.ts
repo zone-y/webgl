@@ -3,6 +3,10 @@ declare namespace cuon {
     export var initShaders: (gl: WebGLRenderbuffer, vshader: string, fshader: string)=>boolean;
     export var getProgram: (gl: any)=>WebGLProgram;
     export var program: WebGLProgram;
+    export class Vector2 {
+        x: number;
+        y: number;
+    }
     export class Vector3 {
         constructor(opt_src?: number[]);
         elements: Float32Array;
